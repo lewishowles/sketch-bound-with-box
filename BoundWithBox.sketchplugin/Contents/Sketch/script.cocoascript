@@ -1,0 +1,109 @@
+var onRun = function(context) {
+	var doc            = context.document;
+	var selectedLayers = context.selection;
+	var selectedCount  = selectedLayers.count();
+	var selectedLayer  = selectedLayers.firstObject();
+	var parentGroup    = selectedLayer.parentGroup();
+
+	// Plugin requires a selection to determine the starting colour
+	if (selectedCount == 0) {
+		doc.displayMessage('No layer selected');
+	} else {
+		var style = MSDefaultStyle.defaultStyle();
+		var alert   = buildDialog();
+    	var options = handleAlertResponse(alert, alert.runModal());
+
+		if (options != null) {
+			var posX   = selectedLayer.frame().x();
+			var posY   = selectedLayer.frame().y();
+			var width  = selectedLayer.frame().width();
+			var height = selectedLayer.frame().height();
+
+			if (options.padding > 0) {
+				var padding = options.padding * 2;
+				width       = width + padding;
+				height      = height + padding;
+			}
+
+			if (options.move == 'Move Contents') {
+				selectedLayer.frame().addX(options.padding);
+				selectedLayer.frame().addY(options.padding);
+			} else {
+				posX = posX - options.padding;
+				posY = posY - options.padding;
+			}
+
+			var rect = MSRectangleShape.alloc().init();
+			rect.frame = MSRect.rectWithRect(NSMakeRect(posX, posY, width, height));
+
+			var shapeGroup = MSShapeGroup.shapeWithPath(rect);
+			shapeGroup.style().fills().addNewStylePart();
+
+			parentGroup.addLayers([shapeGroup]);
+
+			selectedLayer.setIsSelected(false);
+			shapeGroup.setIsSelected(true);
+		}
+	}
+
+	/**
+	 * Build dialog window with appropriate options
+	 * @return {COSAlertWindow} The alert window requesting input
+	 */
+    function buildDialog() {
+    	var alert = COSAlertWindow.new();
+
+		alert.setMessageText('Bound with Box');
+
+		alert.setInformativeText('Choose padding and offset options');
+
+		alert.addTextLabelWithValue('Enter padding amount');
+		alert.addTextFieldWithValue('0');
+
+		alert.addTextLabelWithValue('If you have specified padding, would you like to move the contents to match the box, or move the box and leave the contents where they are?');
+
+		var choosePropertyOptions = ['Move Contents', 'Move Box'];
+		var choosePropertySelect  = createSelect(choosePropertyOptions, 0);
+
+		alert.addAccessoryView(choosePropertySelect);
+
+		alert.addButtonWithTitle('OK');
+		alert.addButtonWithTitle('Cancel');
+
+		return alert;
+    }
+
+	/**
+	 * Create Select Box
+	 * @param  {Array}      options           Options for the select
+	 * @param  {Int}        selectedItemIndex Default selected item
+	 * @return {NSComboBox}                   Complete select box
+	 */
+	function createSelect(options, selectedItemIndex) {
+		selectedItemIndex = selectedItemIndex || 0;
+
+		var select = NSComboBox.alloc().initWithFrame(NSMakeRect(0,0,200,25));
+		select.addItemsWithObjectValues(options);
+		select.selectItemAtIndex(selectedItemIndex);
+
+		return select;
+	}
+
+	/**
+	 * Collect user input from alert window
+	 * @param  {COSAlertWindow} alert             The alert window
+	 * @param  {Int}            responseCode      Alert window response code
+	 * @param  {String}         selectedLayerType Class of the originally selected layer
+	 * @return {Object}                           Alert window results
+	 */
+	function handleAlertResponse(alert, responseCode) {
+	    if (responseCode == "1000") {
+	        return {
+	        	padding : alert.viewAtIndex(1).stringValue(),
+	        	move    : alert.viewAtIndex(3).stringValue()
+	        };
+	    }
+
+    	return null;
+    }
+};

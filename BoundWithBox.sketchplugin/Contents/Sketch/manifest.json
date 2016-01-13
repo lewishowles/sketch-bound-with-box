@@ -1,0 +1,23 @@
+{
+  "author" : "Lewis Howles",
+  "commands" : [
+    {
+      "script" : "script.cocoascript",
+      "handler" : "onRun",
+      "shortcut" : "ctrl shift b",
+      "name" : "Bound with Box",
+      "identifier" : "boundwithbox"
+    }
+  ],
+  "menu" : {
+    "items" : [
+      "boundwithbox"
+    ],
+    "title" : "Bound with Box"
+  },
+  "identifier" : "com.example.sketch.03e9d746-4b3c-472e-8e6b-706fc5c3a46d",
+  "version" : "1.0",
+  "description" : "Draw a rectangle matching the selected layer - ideal for creating a box for loose elements",
+  "authorEmail" : "",
+  "name" : "Sketch Bound with Box"
+}
