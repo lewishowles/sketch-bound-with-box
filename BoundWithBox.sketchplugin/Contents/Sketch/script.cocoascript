@@ -2,22 +2,34 @@ var onRun = function(context) {
 	var doc            = context.document;
 	var selectedLayers = context.selection;
 	var selectedCount  = selectedLayers.count();
-	var selectedLayer  = selectedLayers.firstObject();
-	var parentGroup    = selectedLayer.parentGroup();
+	var firstLayer     = selectedLayers.firstObject();
 
 	// Plugin requires a selection to determine the starting colour
 	if (selectedCount == 0) {
 		doc.displayMessage('No layer selected');
 	} else {
-		var style = MSDefaultStyle.defaultStyle();
+		var artboard = firstLayer;
+
+	    while (artboard.class() != MSArtboardGroup) {
+	    	artboard = artboard.parentGroup();
+	    }
+
 		var alert   = buildDialog();
     	var options = handleAlertResponse(alert, alert.runModal());
 
 		if (options != null) {
-			var posX   = selectedLayer.frame().x();
-			var posY   = selectedLayer.frame().y();
-			var width  = selectedLayer.frame().width();
-			var height = selectedLayer.frame().height();
+			if (selectedCount == 1) {
+				var posX   = firstLayer.frame().x();
+				var posY   = firstLayer.frame().y();
+				var width  = firstLayer.frame().width();
+				var height = firstLayer.frame().height();
+			} else {
+				var bounds = MSLayerGroup.groupBoundsForLayers(selectedLayers);
+				var posX   = bounds.origin.x;
+				var posY   = bounds.origin.y;
+				var width  = bounds.size.width;
+				var height = bounds.size.height;
+			}
 
 			if (options.padding > 0) {
 				var padding = options.padding * 2;
@@ -26,8 +38,17 @@ var onRun = function(context) {
 			}
 
 			if (options.move == 'Move Contents') {
-				selectedLayer.frame().addX(options.padding);
-				selectedLayer.frame().addY(options.padding);
+				if (selectedCount == 1) {
+					firstLayer.frame().addX(options.padding);
+					firstLayer.frame().addY(options.padding);
+				} else {
+					for (var i = 0; i < selectedCount; i++){
+						var item = selectedLayers[i];
+
+						item.frame().addX(options.padding);
+						item.frame().addY(options.padding);
+					}
+				}
 			} else {
 				posX = posX - options.padding;
 				posY = posY - options.padding;
@@ -39,9 +60,18 @@ var onRun = function(context) {
 			var shapeGroup = MSShapeGroup.shapeWithPath(rect);
 			shapeGroup.style().fills().addNewStylePart();
 
-			parentGroup.addLayers([shapeGroup]);
+			artboard.addLayers([shapeGroup]);
 
-			selectedLayer.setIsSelected(false);
+			if (selectedCount == 1) {
+				firstLayer.setIsSelected(false);
+			} else {
+				for (var i = 0; i < selectedCount; i++){
+					var item = selectedLayers[i];
+
+					item.setIsSelected(false);
+				}
+			}
+
 			shapeGroup.setIsSelected(true);
 		}
 	}
@@ -93,7 +123,6 @@ var onRun = function(context) {
 	 * Collect user input from alert window
 	 * @param  {COSAlertWindow} alert             The alert window
 	 * @param  {Int}            responseCode      Alert window response code
-	 * @param  {String}         selectedLayerType Class of the originally selected layer
 	 * @return {Object}                           Alert window results
 	 */
 	function handleAlertResponse(alert, responseCode) {
