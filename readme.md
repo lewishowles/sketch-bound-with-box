@@ -1,6 +1,8 @@
 # Sketch Bound with Box
 
-This plugin takes the selected layer and draws a matching rectangle, ideal for creating a box around previously loose elements.
+This plugin takes the selected layer and draws a rectangle with the same size and position.
+
+This tends to be useful for creating a box as an alignment tool, or as a quick method of creating a box around elements as part of a design.
 
 ## Padding
 
