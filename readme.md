@@ -16,7 +16,7 @@ You have the choice to move the contents (where the rectangle is drawn at the to
 
 You can now force the box to be square, based on the longest dimension. This will use the selected Move option to align the contents with the box.
 
-![Sketch Bound with Box gathering user input](/BoundWithBox.sketchplugin/Contents/Resources/bound-with-box.png?raw=true)
+![Sketch Bound with Box gathering user input](/BoundWithBox.sketchplugin/Contents/Resources/bound-with-box.gif?raw=true)
 
 ## Installation
 
