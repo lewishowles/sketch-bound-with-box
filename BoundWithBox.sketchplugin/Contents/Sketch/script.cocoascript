@@ -4,18 +4,13 @@ var onRun = function(context) {
 	var selectedCount  = selectedLayers.count();
 	var firstLayer     = selectedLayers.firstObject();
 
-	// Plugin requires a selection to determine the starting colour
+	// Plugin requires a selection to determine the contents of the box
 	if (selectedCount == 0) {
 		doc.displayMessage('No layer selected');
 	} else {
-		var artboard = firstLayer;
-
-	    while (artboard.class() != MSArtboardGroup) {
-	    	artboard = artboard.parentGroup();
-	    }
-
-		var alert   = buildDialog();
-    	var options = handleAlertResponse(alert, alert.runModal());
+		var artboard = firstLayer.parentGroup();
+		var alert    = buildDialog();
+    	var options  = handleAlertResponse(alert, alert.runModal());
 
 		if (options != null) {
 			if (selectedCount == 1) {
