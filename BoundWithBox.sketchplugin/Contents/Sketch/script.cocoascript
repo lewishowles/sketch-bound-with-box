@@ -14,11 +14,13 @@ var onRun = function(context) {
 
 		if (options != null) {
 			if (selectedCount == 1) {
+				// Single layer selected
 				var posX   = firstLayer.frame().x();
 				var posY   = firstLayer.frame().y();
 				var width  = firstLayer.frame().width();
 				var height = firstLayer.frame().height();
 			} else {
+				// Multiple layers selected
 				var bounds = MSLayerGroup.groupBoundsForLayers(selectedLayers);
 				var posX   = bounds.origin.x;
 				var posY   = bounds.origin.y;
@@ -26,27 +28,42 @@ var onRun = function(context) {
 				var height = bounds.size.height;
 			}
 
-			if (options.padding > 0) {
-				var padding = options.padding * 2;
-				width       = width + padding;
-				height      = height + padding;
+			var subPaddingX = 0;
+			var subPaddingY = 0;
+			var paddingX    = options.padding * 2;
+			var paddingY    = options.padding * 2;
+
+			// If the square option is chosen, we'll also want to add some
+			// substitute padding to ensure both sides are equal
+			if (options.square == 'Yes') {
+				if (width > height) {
+					subPaddingY = (width - height);
+				} else {
+					subPaddingX = (height - width);
+				}
 			}
+
+			// Add padding
+			paddingWidth  = paddingX + subPaddingX;
+			paddingHeight = paddingY + subPaddingY;
+			width         = width + paddingWidth;
+			height        = height + paddingHeight;
 
 			if (options.move == 'Move Contents') {
 				if (selectedCount == 1) {
-					firstLayer.frame().addX(options.padding);
-					firstLayer.frame().addY(options.padding);
+					firstLayer.frame().addX(paddingWidth / 2);
+					firstLayer.frame().addY(paddingHeight / 2);
 				} else {
 					for (var i = 0; i < selectedCount; i++){
 						var item = selectedLayers[i];
 
-						item.frame().addX(options.padding);
-						item.frame().addY(options.padding);
+						item.frame().addX(paddingWidth / 2);
+						item.frame().addY(paddingHeight / 2);
 					}
 				}
 			} else {
-				posX = posX - options.padding;
-				posY = posY - options.padding;
+				posX = posX - (paddingWidth / 2);
+				posY = posY - (paddingHeight / 2);
 			}
 
 			var rect = MSRectangleShape.alloc().init();
@@ -92,6 +109,13 @@ var onRun = function(context) {
 
 		alert.addAccessoryView(choosePropertySelect);
 
+		alert.addTextLabelWithValue('Do you want to force the box to be square?');
+
+		var chooseRatioOptions = ['No', 'Yes'];
+		var chooseRatioSelect  = createSelect(chooseRatioOptions, 0);
+
+		alert.addAccessoryView(chooseRatioSelect);
+
 		alert.addButtonWithTitle('OK');
 		alert.addButtonWithTitle('Cancel');
 
@@ -124,7 +148,8 @@ var onRun = function(context) {
 	    if (responseCode == "1000") {
 	        return {
 	        	padding : alert.viewAtIndex(1).stringValue(),
-	        	move    : alert.viewAtIndex(3).stringValue()
+	        	move    : alert.viewAtIndex(3).stringValue(),
+				square  : alert.viewAtIndex(5).stringValue()
 	        };
 	    }
 
