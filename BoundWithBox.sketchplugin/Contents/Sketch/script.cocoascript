@@ -70,7 +70,7 @@ var onRun = function(context) {
 			rect.frame = MSRect.rectWithRect(NSMakeRect(posX, posY, width, height));
 
 			var shapeGroup = MSShapeGroup.shapeWithPath(rect);
-			shapeGroup.style().fills().addNewStylePart();
+			shapeGroup.style().addStylePartOfType(0);
 
 			artboard.addLayers([shapeGroup]);
 
