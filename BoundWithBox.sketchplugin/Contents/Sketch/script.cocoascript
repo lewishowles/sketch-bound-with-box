@@ -51,14 +51,14 @@ var onRun = function(context) {
 
 			if (options.move == 'Move Contents') {
 				if (selectedCount == 1) {
-					firstLayer.frame().addX(paddingWidth / 2);
-					firstLayer.frame().addY(paddingHeight / 2);
+					firstLayer.frame().setX(parseFloat(firstLayer.frame().x()) + paddingWidth / 2);
+					firstLayer.frame().setY(parseFloat(firstLayer.frame().y()) + paddingHeight / 2);
 				} else {
 					for (var i = 0; i < selectedCount; i++){
 						var item = selectedLayers[i];
 
-						item.frame().addX(paddingWidth / 2);
-						item.frame().addY(paddingHeight / 2);
+						item.frame().setX(parseFloat(item.frame().x()) + paddingWidth / 2);
+						item.frame().setY(parseFloat(item.frame().y()) + paddingHeight / 2);
 					}
 				}
 			} else {
