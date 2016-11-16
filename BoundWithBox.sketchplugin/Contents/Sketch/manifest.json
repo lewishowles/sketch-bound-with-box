@@ -1,24 +1,23 @@
 {
-  "author" : "Lewis Howles",
-  "commands" : [
-    {
-      "script" : "script.cocoascript",
-      "handler" : "onRun",
-      "shortcut" : "ctrl shift b",
-      "name" : "Bound with Box",
-      "identifier" : "boundwithbox"
-    }
-  ],
-  "menu" : {
-    "items" : [
-      "boundwithbox"
-    ],
-    "title" : "Bound with Box"
-  },
-  "identifier" : "com.example.sketch.03e9d746-4b3c-472e-8e6b-706fc5c3a46d",
-  "version" : 1.3,
-  "compatibleVersion": 3,
-  "description" : "This plugin takes the selected layer(s) and draws a rectangle around them.",
-  "authorEmail" : "",
-  "name" : "Sketch Bound with Box"
+	"author" : "Lewis Howles",
+	"commands" : [
+		{
+			"script"     : "script.cocoascript",
+			"handler"    : "onRun",
+			"shortcut"   : "ctrl shift b",
+			"name"       : "Bound with Box",
+			"identifier" : "boundwithbox"
+		}
+	],
+	"menu" : {
+		"items" : [
+			"boundwithbox"
+		],
+		"title" : "Bound with Box"
+	},
+	"identifier"	: "com.example.sketch.03e9d746-4b3c-472e-8e6b-706fc5c3a46d",
+	"version"		 : 1.4,
+	"description" : "This plugin takes the selected layer(s) and draws a rectangle around them.",
+	"authorEmail" : "",
+	"name"				: "Sketch Bound with Box"
 }
