@@ -1,36 +1,39 @@
 var onRun = function(context) {
-	var doc            = context.document;
-	var selectedLayers = context.selection;
-	var selectedCount  = selectedLayers.count();
-	var firstLayer     = selectedLayers.firstObject();
+	var sketch     = context.document;
+	var selection  = context.selection;
+	var layerCount = selection.count();
 
 	// Plugin requires a selection to determine the contents of the box
-	if (selectedCount == 0) {
-		doc.displayMessage('No layer selected');
+	if (layerCount == 0) {
+		sketch.displayMessage('No layer selected');
 	} else {
-		var artboard = firstLayer;
+		// Find the current group, artboard or page
+		var firstLayer = selection.firstObject();
+		var container  = firstLayer;
 
-		while (artboard.class() != MSArtboardGroup) {
-			artboard = artboard.parentGroup();
+		// Can't use indexOf here, for some reason
+		while (container.class() != 'MSPage' && container.class() != 'MSArtboardGroup' && container.class() != 'MSLayerGroup') {
+			// Move up the document tree
+			container = container.parentGroup();
 		}
 
-		var alert   = buildDialog(selectedCount);
-    	var options = handleAlertResponse(alert, alert.runModal(), selectedCount);
+		var alert   = buildDialog(layerCount);
+    	var options = handleAlertResponse(alert, alert.runModal(), layerCount);
 
 		if (options != null) {
-			if (selectedCount == 1) {
+			if (layerCount == 1) {
 				// Single layer selected, box is drawn around the layer
-				boundLayer(artboard, selectedLayers, firstLayer, options);
+				boundLayer(container, selection, firstLayer, options);
 			} else {
 				if (options.selection == 'Selection') {
 					// Multiple layers selected, box is drawn around the bounds for the selection
-					boundSelection(artboard, selectedLayers, options);
+					boundSelection(container, selection, options);
 				} else {
 					// Bound each element of the selection indivdually
-					for (var i = 0; i < selectedCount; i++){
-						var item = selectedLayers[i];
+					for (var i = 0; i < layerCount; i++){
+						var item = selection[i];
 
-						boundLayer(artboard, selectedLayers, item, options);
+						boundLayer(container, selection, item, options);
 					}
 				}
 			}
@@ -39,39 +42,117 @@ var onRun = function(context) {
 
 	/**
 	 * Bound individual layer with a box
-	 * @param  {object} selectedLayers Selected layers
-	 * @param  {object} layer          Current layer
-	 * @param  {object} options        User-selected options
+	 * @param  {object}  selection  Selected layers
+	 * @param  {object}  layer      Current layer
+	 * @param  {object}  options    User-selected options
 	 */
-	function boundLayer(artboard, selectedLayers, layer, options) {
+	function boundLayer(container, selection, layer, options) {
 		var posX   = layer.frame().x();
 		var posY   = layer.frame().y();
 		var width  = layer.frame().width();
 		var height = layer.frame().height();
 
-		drawBoundingBox(artboard, layer, posX, posY, width, height, options, selectedLayers, true);
+		drawBoundingBox(container, layer, posX, posY, width, height, options, selection, true);
 	}
 
 	/**
 	 * Bound selection as a whole with box
-	 * @param  {object} selectedLayers Selected layers
-	 * @param  {object} options        User-selected options
+	 * @param  {object}  selection  Selected layers
+	 * @param  {object}  options    User-selected options
 	 */
-	function boundSelection(artboard, selectedLayers, options) {
-		var bounds = MSLayerGroup.groupBoundsForLayers(selectedLayers);
+	function boundSelection(container, selection, options) {
+		var bounds = MSLayerGroup.groupBoundsForContainer(MSLayerArray.arrayWithLayers(selection));
 		var posX   = bounds.origin.x;
 		var posY   = bounds.origin.y;
 		var width  = bounds.size.width;
 		var height = bounds.size.height;
 
-		drawBoundingBox(artboard, null, posX, posY, width, height, options, selectedLayers, false);
+		drawBoundingBox(container, null, posX, posY, width, height, options, selection, false);
+	}
+
+	/**
+	 * Draw bounding box around given co-ordinates
+	 * @param  {int}     posX        x-axis co-ordinate of the box
+	 * @param  {int}     posY        y-axis co-ordinate of the box
+	 * @param  {int}     width       With of the box
+	 * @param  {int}     height      Height of the box
+	 * @param  {object}  options     User-selected options
+	 * @param  {object}  selection   Selected layers
+	 * @param  {bool}    individual  Whether layers are being acted upon individually
+	 */
+	function drawBoundingBox(container, layer, posX, posY, width, height, options, selection, individual) {
+		var substitutePaddingX = 0;
+		var substitutePaddingY = 0;
+		var paddingX           = options.padding * 2;
+		var paddingY           = options.padding * 2;
+
+		// If the square option is chosen, we'll also want to add some
+		// substitute padding to ensure both sides are equal
+		if (options.square == 'Yes') {
+			if (width > height) {
+				substitutePaddingY = (width - height);
+			} else {
+				substitutePaddingX = (height - width);
+			}
+		}
+
+		// Add padding
+		var paddingWidth  = paddingX + substitutePaddingX;
+		var paddingHeight = paddingY + substitutePaddingY;
+		width             = width + paddingWidth;
+		height            = height + paddingHeight;
+
+		if (options.move == 'Move Contents') {
+			// Selected layers will be moved individually, while the box will
+			// be drawn at the top left of the original bounds
+			if (individual) {
+				layer.frame().setX(parseFloat(layer.frame().x()) + paddingWidth / 2);
+				layer.frame().setY(parseFloat(layer.frame().y()) + paddingHeight / 2);
+			} else {
+				for (var i = 0; i < layerCount; i++){
+					var item = selection[i];
+
+					item.frame().setX(parseFloat(item.frame().x()) + paddingWidth / 2);
+					item.frame().setY(parseFloat(item.frame().y()) + paddingHeight / 2);
+				}
+			}
+		} else {
+			// The box will be drawn offset from the bounds,
+			// while the layers are left where they are
+			posX = posX - (paddingWidth / 2);
+			posY = posY - (paddingHeight / 2);
+		}
+
+		// Create rectangle
+		var rect   = MSRectangleShape.alloc().init();
+		rect.frame = MSRect.rectWithRect(NSMakeRect(posX, posY, width, height));
+
+		// Add default styling
+		var shapeGroup = MSShapeGroup.shapeWithPath(rect);
+		shapeGroup.style().addStylePartOfType(0);
+
+		// Add to the container
+		container.addLayers([shapeGroup]);
+
+		// Deselect all layers
+		if (individual) {
+			layer.setIsSelected(false);
+		} else {
+			for (var i = 0; i < layerCount; i++){
+				var item = selection[i];
+
+				item.setIsSelected(false);
+			}
+		}
+
+		shapeGroup.setIsSelected(true);
 	}
 
 	/**
 	 * Build dialog window with appropriate options
 	 * @return {COSAlertWindow} The alert window requesting input
 	 */
-    function buildDialog(selectedCount) {
+    function buildDialog(layerCount) {
     	var alert = COSAlertWindow.new();
 
 		alert.setMessageText('Bound with Box');
@@ -95,7 +176,7 @@ var onRun = function(context) {
 
 		alert.addAccessoryView(chooseRatioSelect);
 
-		if (selectedCount > 1) {
+		if (layerCount > 1) {
 			alert.addTextLabelWithValue('Bound the selection, or each individual layer?');
 
 			var boundSelectionOptions = ['Selection', 'Layers in selection'];
@@ -109,76 +190,6 @@ var onRun = function(context) {
 
 		return alert;
     }
-
-	/**
-	 * Draw bounding box around given co-ordinates
-	 * @param  {int}    posX           x-axis co-ordinate of the box
-	 * @param  {int}    posY           y-axis co-ordinate of the box
-	 * @param  {int}    width          With of the box
-	 * @param  {int}    height         Height of the box
-	 * @param  {object} options        User-selected options
-	 * @param  {object} selectedLayers Selected layers
-	 * @param  {bool}   individual     Whether layers are being acted upon individually
-	 */
-	function drawBoundingBox(artboard, layer, posX, posY, width, height, options, selectedLayers, individual) {
-		var subPaddingX = 0;
-		var subPaddingY = 0;
-		var paddingX    = options.padding * 2;
-		var paddingY    = options.padding * 2;
-
-		// If the square option is chosen, we'll also want to add some
-		// substitute padding to ensure both sides are equal
-		if (options.square == 'Yes') {
-			if (width > height) {
-				subPaddingY = (width - height);
-			} else {
-				subPaddingX = (height - width);
-			}
-		}
-
-		// Add padding
-		var paddingWidth  = paddingX + subPaddingX;
-		var paddingHeight = paddingY + subPaddingY;
-		width             = width + paddingWidth;
-		height            = height + paddingHeight;
-
-		if (options.move == 'Move Contents') {
-			if (individual) {
-				layer.frame().setX(parseFloat(layer.frame().x()) + paddingWidth / 2);
-				layer.frame().setY(parseFloat(layer.frame().y()) + paddingHeight / 2);
-			} else {
-				for (var i = 0; i < selectedCount; i++){
-					var item = selectedLayers[i];
-
-					item.frame().setX(parseFloat(item.frame().x()) + paddingWidth / 2);
-					item.frame().setY(parseFloat(item.frame().y()) + paddingHeight / 2);
-				}
-			}
-		} else {
-			posX = posX - (paddingWidth / 2);
-			posY = posY - (paddingHeight / 2);
-		}
-
-		var rect = MSRectangleShape.alloc().init();
-		rect.frame = MSRect.rectWithRect(NSMakeRect(posX, posY, width, height));
-
-		var shapeGroup = MSShapeGroup.shapeWithPath(rect);
-		shapeGroup.style().addStylePartOfType(0);
-
-		artboard.addLayers([shapeGroup]);
-
-		if (individual) {
-			layer.setIsSelected(false);
-		} else {
-			for (var i = 0; i < selectedCount; i++){
-				var item = selectedLayers[i];
-
-				item.setIsSelected(false);
-			}
-		}
-
-		shapeGroup.setIsSelected(true);
-	}
 
 	/**
 	 * Create Select Box for dialog window
@@ -202,9 +213,9 @@ var onRun = function(context) {
 	 * @param  {Int}            responseCode      Alert window response code
 	 * @return {Object}                           Alert window results
 	 */
-	function handleAlertResponse(alert, responseCode, selectedCount) {
+	function handleAlertResponse(alert, responseCode, layerCount) {
 	    if (responseCode == "1000") {
-			if (selectedCount > 1) {
+			if (layerCount > 1) {
 				return {
 		        	padding   : alert.viewAtIndex(1).stringValue(),
 		        	move      : alert.viewAtIndex(3).stringValue(),
