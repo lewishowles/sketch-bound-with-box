@@ -15,7 +15,7 @@
 		],
 		"title" : "Bound with Box"
 	},
-	"identifier"  : "com.example.sketch.03e9d746-4b3c-472e-8e6b-706fc5c3a46d",
+	"identifier"  : "com.example.sketch.sketch-bound-with-box",
 	"version"     : 1.5,
 	"description" : "This plugin takes the selected layer(s) and draws a rectangle around them.",
 	"authorEmail" : "",
